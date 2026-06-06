@@ -21,8 +21,9 @@ class ResizeObserverStub {
   unobserve() {}
   disconnect() {}
 }
-// @ts-expect-error attach to global
-window.ResizeObserver = window.ResizeObserver || ResizeObserverStub;
+(window as unknown as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver =
+  (window as unknown as { ResizeObserver?: typeof ResizeObserverStub }).ResizeObserver ||
+  ResizeObserverStub;
 
 beforeEach(() => {
   localStorage.clear();
