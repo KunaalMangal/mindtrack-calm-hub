@@ -1,6 +1,15 @@
 # MindTrack Student Wellness
 
-A calming, wellness-focused web application designed for students preparing for competitive exams like JEE, NEET, CUET, CAT, GATE, and UPSC. Track your mood, identify stress triggers, journal your thoughts, and receive AI-powered wellness insights — all in under 60 seconds a day.
+A calming, wellness-focused web application designed for students preparing for Boards, JEE, NEET, CUET, CAT, GATE, and UPSC. Track your mood, identify stress triggers, journal your thoughts, and receive AI-powered wellness insights — all in under 60 seconds a day.
+
+## Testing
+
+```bash
+bun run test        # run the full Vitest suite once
+bun run test:watch  # watch mode
+```
+
+The suite covers the wellness store (burnout formula, category thresholds, storage validation, sanitization, AI insight rules) and page-level interactions (mood selection, trigger toggling, journal limits, dashboard rendering).
 
 ## Features
 
