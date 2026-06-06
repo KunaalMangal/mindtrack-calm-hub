@@ -3,18 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { Stepper } from "@/components/Stepper";
 import { getDraft, setDraft } from "@/lib/wellnessStore";
+import { TRIGGERS } from "@/lib/wellnessConstants";
 import { ArrowRight, Check } from "lucide-react";
-
-const TRIGGERS = [
-  { t: "Exam Pressure", e: "📚" },
-  { t: "Family Expectations", e: "👨‍👩‍👧" },
-  { t: "Mock Test Scores", e: "📊" },
-  { t: "Lack of Preparation", e: "⏳" },
-  { t: "Results Anxiety", e: "📮" },
-  { t: "Social Comparison", e: "📱" },
-  { t: "Sleep Issues", e: "🌙" },
-  { t: "Financial Concerns", e: "💸" },
-];
 
 const Triggers = () => {
   const nav = useNavigate();
@@ -39,20 +29,23 @@ const Triggers = () => {
           <p className="text-muted-foreground">Select any that resonate. Naming it is half of taming it.</p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8 animate-slide-up">
+        <div role="group" aria-label="Stress triggers" className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8 animate-slide-up">
           {TRIGGERS.map((tr) => {
             const active = selected.includes(tr.t);
             return (
               <button
                 key={tr.t}
+                type="button"
+                aria-pressed={active}
+                aria-label={tr.t}
                 onClick={() => toggle(tr.t)}
-                className={`relative rounded-2xl p-5 text-left transition-all border-2
+                className={`relative rounded-2xl p-5 text-left transition-all border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary
                   ${active ? "border-primary bg-gradient-primary text-primary-foreground shadow-glow scale-[1.02]" : "border-transparent glass hover:bg-white/80"}`}
               >
-                <div className="text-3xl mb-2">{tr.e}</div>
+                <div aria-hidden="true" className="text-3xl mb-2">{tr.e}</div>
                 <div className="font-semibold text-sm leading-tight">{tr.t}</div>
                 {active && (
-                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/30 grid place-items-center">
+                  <div aria-hidden="true" className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/30 grid place-items-center">
                     <Check className="w-3.5 h-3.5" />
                   </div>
                 )}
@@ -63,16 +56,18 @@ const Triggers = () => {
 
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={() => nav("/check-in")}
-            className="px-6 py-4 rounded-2xl glass font-semibold hover:bg-white/80 transition-colors"
+            className="px-6 py-4 rounded-2xl glass font-semibold hover:bg-white/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Back
           </button>
           <button
+            type="button"
             onClick={next}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:scale-[1.01] transition-transform"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:scale-[1.01] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            Continue ({selected.length} selected) <ArrowRight className="w-4 h-4" />
+            Continue ({selected.length} selected) <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </main>
