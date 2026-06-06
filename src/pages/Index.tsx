@@ -12,8 +12,8 @@ const Index = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="animate-slide-up">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs font-medium text-primary mb-6">
-              <Sparkles className="w-3.5 h-3.5" />
-              Built for JEE • NEET • CUET • CAT • GATE • UPSC
+              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+              Built for Boards • JEE • NEET • CUET • CAT • GATE • UPSC
             </div>
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] mb-6">
               Your mind matters <br />
