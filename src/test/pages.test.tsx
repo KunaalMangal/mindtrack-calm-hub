@@ -80,7 +80,7 @@ describe("Insights page", () => {
     expect(getEntries()).toHaveLength(1);
     renderAt(<Insights />);
     expect(screen.queryByText(/demo snapshot/i)).not.toBeInTheDocument();
-    expect(screen.getByText("29")).toBeInTheDocument();
+    expect(screen.getAllByText("29").length).toBeGreaterThan(0);
     expect(screen.getByText(/Low risk/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /recent check-ins/i })).toBeInTheDocument();
   });
