@@ -1,15 +1,20 @@
+import { z } from "zod";
+import { JOURNAL_MAX, TRIGGERS_MAX } from "./wellnessConstants";
+
 export type Mood = "Happy" | "Good" | "Neutral" | "Stressed" | "Burned Out";
 
-export interface MoodEntry {
-  mood: Mood;
-  stressLevel: number;
-  sleepHours: number;
-  studyHours: number;
-  triggers: string[];
-  journal: string;
-  burnoutScore: number;
-  createdAt: string;
-}
+export const MoodEntrySchema = z.object({
+  mood: z.enum(["Happy", "Good", "Neutral", "Stressed", "Burned Out"]),
+  stressLevel: z.number().min(0).max(10),
+  sleepHours: z.number().min(0).max(24),
+  studyHours: z.number().min(0).max(24),
+  triggers: z.array(z.string().max(80)).max(TRIGGERS_MAX),
+  journal: z.string().max(JOURNAL_MAX),
+  burnoutScore: z.number().min(0).max(200),
+  createdAt: z.string().min(1),
+});
+
+export type MoodEntry = z.infer<typeof MoodEntrySchema>;
 
 const KEY = "mindtrack_entries_v1";
 const DRAFT = "mindtrack_draft_v1";
@@ -25,38 +30,86 @@ export function burnoutCategory(score: number): "Low" | "Medium" | "High" | "Cri
   return "Critical";
 }
 
+// Strip control chars to prevent injection-style payloads being persisted.
+function sanitizeText(s: string, max: number): string {
+  return s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").slice(0, max);
+}
+
+export function sanitizeEntry(e: MoodEntry): MoodEntry {
+  return {
+    ...e,
+    journal: sanitizeText(e.journal, JOURNAL_MAX),
+    triggers: e.triggers.slice(0, TRIGGERS_MAX).map((t) => sanitizeText(t, 80)),
+  };
+}
+
 export function getEntries(): MoodEntry[] {
   try {
-    return JSON.parse(localStorage.getItem(KEY) || "[]");
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const valid: MoodEntry[] = [];
+    for (const item of parsed) {
+      const r = MoodEntrySchema.safeParse(item);
+      if (r.success) valid.push(r.data);
+    }
+    return valid;
   } catch {
     return [];
   }
 }
 
 export function saveEntry(entry: MoodEntry) {
+  const safe = sanitizeEntry(entry);
+  const parsed = MoodEntrySchema.safeParse(safe);
+  if (!parsed.success) return;
   const all = getEntries();
-  all.push(entry);
-  localStorage.setItem(KEY, JSON.stringify(all));
+  all.push(parsed.data);
+  try {
+    localStorage.setItem(KEY, JSON.stringify(all));
+  } catch {
+    /* quota / privacy mode — fail silently */
+  }
 }
 
 export type Draft = Partial<MoodEntry>;
+
 export function getDraft(): Draft {
   try {
-    return JSON.parse(sessionStorage.getItem(DRAFT) || "{}");
+    const raw = sessionStorage.getItem(DRAFT);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return typeof parsed === "object" && parsed !== null ? (parsed as Draft) : {};
   } catch {
     return {};
   }
 }
+
 export function setDraft(patch: Draft) {
-  const next = { ...getDraft(), ...patch };
-  sessionStorage.setItem(DRAFT, JSON.stringify(next));
+  const next: Draft = { ...getDraft(), ...patch };
+  if (typeof next.journal === "string") next.journal = sanitizeText(next.journal, JOURNAL_MAX);
+  if (Array.isArray(next.triggers))
+    next.triggers = next.triggers.slice(0, TRIGGERS_MAX).map((t) => sanitizeText(String(t), 80));
+  try {
+    sessionStorage.setItem(DRAFT, JSON.stringify(next));
+  } catch {
+    /* ignore */
+  }
 }
+
 export function clearDraft() {
   sessionStorage.removeItem(DRAFT);
 }
 
-export function generateInsights(entry: MoodEntry): { title: string; body: string; icon: string }[] {
-  const out: { title: string; body: string; icon: string }[] = [];
+export interface Insight {
+  title: string;
+  body: string;
+  icon: string;
+}
+
+export function generateInsights(entry: MoodEntry): Insight[] {
+  const out: Insight[] = [];
   const cat = burnoutCategory(entry.burnoutScore);
 
   if (entry.stressLevel >= 7) {
@@ -126,8 +179,11 @@ export function generateInsights(entry: MoodEntry): { title: string; body: strin
 }
 
 export function encouragement(score: number): string {
-  if (score <= 30) return "You're balancing study and self-care beautifully. Keep this rhythm — it's your superpower. 🌿";
-  if (score <= 60) return "You're carrying real weight and still showing up. That's strength. Take one gentle step today. 💚";
-  if (score <= 80) return "This is hard, and you're allowed to slow down. Rest is part of preparation, not a setback. 🤍";
+  if (score <= 30)
+    return "You're balancing study and self-care beautifully. Keep this rhythm — it's your superpower. 🌿";
+  if (score <= 60)
+    return "You're carrying real weight and still showing up. That's strength. Take one gentle step today. 💚";
+  if (score <= 80)
+    return "This is hard, and you're allowed to slow down. Rest is part of preparation, not a setback. 🤍";
   return "Please be kind to yourself today. Talk to someone you trust. You are more than any exam. You matter. 💙";
 }
